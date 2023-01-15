@@ -28,7 +28,9 @@ These software installs are required:
 Build the client first
 
 ```bash
+mkdir ftb-server/src/main/resources/static
 cd ftb-client
+npm install
 npm run build
 ```
 
