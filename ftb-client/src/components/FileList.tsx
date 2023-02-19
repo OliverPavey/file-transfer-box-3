@@ -1,75 +1,50 @@
-import {FC, MouseEventHandler, useEffect, useState} from "react";
-import axios from "axios";
-import prettyBytes from "pretty-bytes";
-import {Download, Trash} from "react-bootstrap-icons"; // https://icons.getbootstrap.com/
-import ActionDistributor from "../utils/ActionDistributor";
 import "./FileList.css";
-
-interface FileInfo {
-    name: string,
-    bytes: number,
-    modified: number,
-}
-
-const asLocalDate = (modified: number): string =>
-    new Date(modified).toLocaleString().replace(",", "");
-
-const fieldComparator = <T extends any>(field: keyof T): (a: T, b: T) => number => (a, b) =>
-    a[field] === b[field] ? 0 : a[field] > b[field] ? 1 : -1;
+import {FC, MouseEventHandler, useEffect, useState} from "react";
+import {useActions, useFtbSelector} from "../redux";
+import {Download, Trash} from "react-bootstrap-icons"; // https://icons.getbootstrap.com/
+import prettyBytes from "pretty-bytes";
+import FileInfo from "../types/fileInfo";
+import {asLocalDate} from "../utils/dateUtils";
+import {FtbState} from "../redux/reducer";
 
 interface FileListProps {
     apiHost: string;
-    listRefreshAction: ActionDistributor;
 }
 
 const FileList: FC<FileListProps> = (props) => {
-    const {apiHost, listRefreshAction} = props;
+    const {apiHost} = props;
     const [loaded, setLoaded] = useState(false);
-    const [updated, setUpdated] = useState<number>(0);
-    const [fileInfos, setFileInfos] = useState<FileInfo[]>([]);
-    const [sortOrder, setSortOrder] = useState<keyof FileInfo>('name');
+    const {dispatchDeleteFile, dispatchRefreshList, dispatchSortList} = useActions();
+    const {updated, fileInfos, sortField} = useFtbSelector<FtbState>((state: FtbState) => state);
 
     useEffect(() => {
         if (!loaded) {
             setLoaded(true);
-            refreshList();
+            setTimeout(() => dispatchRefreshList(apiHost, sortField), 50);
         }
-    }, []);
-
-    const refreshList = async () => {
-        const {data} = await axios.get(`${apiHost}/api/list`);
-        sortByAndUpdateState(sortOrder, data);
-        setUpdated(Date.now());
-    };
-    listRefreshAction.setAction(refreshList);
+    }, [loaded, apiHost, sortField, dispatchRefreshList]);
 
     const refreshClick: MouseEventHandler<HTMLButtonElement> = (event) => {
         event.preventDefault();
-        refreshList();
+        dispatchRefreshList(apiHost, sortField);
     };
 
     const deleteClick = async (filename: string) => {
-        await axios.delete(`${apiHost}/api/drop/${filename}`);
-        refreshList();
+        const refreshList = () => dispatchRefreshList(apiHost, sortField);
+        dispatchDeleteFile(apiHost, filename, refreshList)
     };
 
-    const sortByAndUpdateState = (sortField: keyof FileInfo, data = fileInfos) => {
-        const sorted = data.sort(fieldComparator(sortField));
-        setFileInfos(sorted);
-        setSortOrder(sortField);
+    const sortByField = (sortField: keyof FileInfo, data = fileInfos) => {
+        dispatchSortList(apiHost, sortField, fileInfos)
     };
 
-    const sortClass = (sortField: keyof FileInfo) => {
-        const highlight = sortField === sortOrder;
+    const sortHtmlClass = (sortFieldSelected: keyof FileInfo) => {
+        const highlight = sortFieldSelected === sortField;
         return `badge rounded-pill ${highlight ? 'bg-primary' : 'bg-secondary'}`;
     };
 
     const down = (<span>&#x25BC;</span>);
-    //const down = (<BsDownload/>);
-    //const down = (<i className="download"></i>);
-    //const trash = (<span>&#x1F5D1;</span>);
     const trash = (<Trash/>);
-    //const download = (<span><strong>&#x21E9;</strong></span>);
     const download = (<Download/>);
 
     return (<div className="card">
@@ -82,14 +57,14 @@ const FileList: FC<FileListProps> = (props) => {
             <table className="table">
                 <thead>
                 <tr>
-                    <td>Filename <span className={sortClass('name')}
-                                       onClick={e => sortByAndUpdateState('name')}>{down}</span>
+                    <td>Filename <span className={sortHtmlClass('name')}
+                                       onClick={e => sortByField('name')}>{down}</span>
                     </td>
-                    <td>Size <span className={sortClass('bytes')}
-                                   onClick={e => sortByAndUpdateState('bytes')}>{down}</span>
+                    <td>Size <span className={sortHtmlClass('bytes')}
+                                   onClick={e => sortByField('bytes')}>{down}</span>
                     </td>
-                    <td>Modified <span className={sortClass('modified')}
-                                       onClick={e => sortByAndUpdateState('modified')}>{down}</span>
+                    <td>Modified <span className={sortHtmlClass('modified')}
+                                       onClick={e => sortByField('modified')}>{down}</span>
                     </td>
                 </tr>
                 </thead>
@@ -103,9 +78,8 @@ const FileList: FC<FileListProps> = (props) => {
                                     <button className="btn btn-sm btn-outline-success"
                                             title="Download">{download}</button>
                                 </a>&nbsp;
-                                <a href="#" onClick={e => deleteClick(`${fileInfo.name}`)}>
-                                    <button className="btn btn-sm btn-outline-danger" title="Delete">{trash}</button>
-                                </a>
+                                <button className="btn btn-sm btn-outline-danger" title="Delete"
+                                        onClick={e => deleteClick(`${fileInfo.name}`)}>{trash}</button>
                             </span>
                         </td>
                         <td>{prettyBytes(fileInfo.bytes)}</td>

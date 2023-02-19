@@ -1,5 +1,5 @@
 import {FC, useEffect, useState} from "react";
-import axios from "axios";
+import {useActions} from "../redux";
 
 interface FolderProps {
     apiHost: string;
@@ -8,16 +8,16 @@ interface FolderProps {
 const Folder: FC<FolderProps> = (props) => {
     const {apiHost} = props;
     const [folder, setFolder] = useState('')
+    const {dispatchRetrieveFolder} = useActions();
 
-    const populateFolder = async () => {
-        if (folder.length !== 0)
-            return;
-        const {data} = await axios.get(`${apiHost}/api/folder`);
-        setFolder(data);
-    };
     useEffect(() => {
+        const populateFolder = async () => {
+            if (folder.length === 0) dispatchRetrieveFolder(apiHost,
+                (value: string) => setFolder(value),
+                (_) => setFolder("Unknown"));
+        };
         populateFolder();
-    }, []);
+    }, [folder, apiHost, dispatchRetrieveFolder]);
 
     return (<div className="alert alert-secondary bg-light" role="alert">
         <span className="fw-light">Server Folder Location: </span>

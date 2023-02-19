@@ -1,29 +1,31 @@
 import {ChangeEventHandler, FC, MouseEventHandler, useId, useRef, useState} from "react";
-import axios from "axios";
-import ActionDistributor from "../utils/ActionDistributor";
+import {useActions, useFtbSelector} from "../redux";
+import {FtbState} from "../redux/reducer";
 
 interface FileUploadProps {
     apiHost: string;
-    listRefreshAction: ActionDistributor;
 }
 
 const FileUpload: FC<FileUploadProps> = (props) => {
-    const {apiHost, listRefreshAction} = props;
+    const {apiHost} = props;
     const filenameId = useId();
     const inputRef = useRef<HTMLInputElement>(null);
     const [file, setFile] = useState<File | null>(null);
     const [fileInputKey, setFileInputKey] = useState(0);
+    const {dispatchRefreshList, dispatchUploadFile} = useActions();
+    const {sortField} = useFtbSelector<FtbState>((state: FtbState) => state);
+
+    const afterUpload = () => {
+        setFile(null);
+        setFileInputKey(fileInputKey + 1); // Changing the key will clear the <input>'s value
+        dispatchRefreshList(apiHost, sortField);
+    }
 
     const onUploadClick: MouseEventHandler<HTMLButtonElement> = async (event) => {
         event.preventDefault();
-
-        const url = `${apiHost}/api/push/${file?.name}`;
-        const config = {headers: {'Content-Type': 'application/octet-stream'}}
-        await axios.post(url, file, config);
-
-        setFile(null);
-        setFileInputKey(fileInputKey + 1); // Changing the key will clear the <input>'s value
-        listRefreshAction.callAction();
+        if (file != null) {
+            dispatchUploadFile(apiHost, file, afterUpload);
+        }
     };
 
     const onFileChange: ChangeEventHandler<HTMLInputElement> = event => {

@@ -2,7 +2,8 @@ import FileList from "./FileList";
 import {FC} from "react";
 import FileUpload from "./FileUpload";
 import Folder from "./Folder";
-import ActionDistributor from "../utils/ActionDistributor";
+import {Provider} from "react-redux";
+import {store} from "../redux";
 
 const Title: FC = () => (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -17,17 +18,17 @@ const App: FC = () => {
     const development = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
     const apiHost = development ? 'http://localhost:8080': '';
 
-    const listRefreshAction = new ActionDistributor();
-
-    return <div className="container">
-        <Title/>
-        <br/>
-        <FileList apiHost={apiHost} listRefreshAction={listRefreshAction}/>
-        <br/>
-        <FileUpload apiHost={apiHost} listRefreshAction={listRefreshAction}/>
-        <br/>
-        <Folder apiHost={apiHost}/>
-    </div>
+    return <Provider store={store}>
+        <div className="container">
+            <Title/>
+            <br/>
+            <FileList apiHost={apiHost}/>
+            <br/>
+            <FileUpload apiHost={apiHost}/>
+            <br/>
+            <Folder apiHost={apiHost}/>
+        </div>
+    </Provider>
 };
 
 export default App;
