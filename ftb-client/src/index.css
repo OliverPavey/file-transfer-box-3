@@ -1,0 +1,36 @@
+body {
+    background-color: #303030;
+}
+
+div.card-body {
+    background: black;
+    color: white;
+    border-radius: 6px;
+}
+div.card-body * {
+    background: black;
+    color: white
+}
+
+div.alert {
+    background: black !important;
+    border-radius: 6px;
+}
+div.alert * {
+    background: black;
+    color: white;
+}
+
+.navbar {
+    background: black !important;
+    color: white;
+    border-radius: 6px;
+}
+.navbar * {
+    background: black;
+    color: white;
+}
+
+span .text-muted {
+    color: #bfbfbf !important;
+}
