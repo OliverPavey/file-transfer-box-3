@@ -28,7 +28,7 @@ class FtbController(val folderConfig: FtbFolder) {
     // e.g. curl http://localhost:8080/api
     @GetMapping(value = ["", "/"])
     fun index(): String = """
-        File Transfer Box 2 Endpoints:
+        File Transfer Box 3 Endpoints:
         GET    /                    - The GUI Application.
         GET    /api                 - This help text.
         GET    /api/list            - List the files available.

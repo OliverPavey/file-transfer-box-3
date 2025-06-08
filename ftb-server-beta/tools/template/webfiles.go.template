@@ -1,0 +1,19 @@
+package main
+
+import _ "embed"
+
+// Genreated by gen_webfiles.go
+
+// How to embed resources into GoLang executables:
+// https://stackoverflow.com/questions/17796043/how-to-embed-files-into-go-binaries
+{{range $r := .resources}}
+//go:embed web/{{$r.Filename}}
+var {{$r.Varname}} []byte
+{{end}}
+func get_resource_map() map[string][]byte {
+	return map[string][]byte{
+		{{- range $c := .resources}}
+		"{{$c.Request}}": {{$c.Varname}},
+		{{- end}}
+	}
+}
