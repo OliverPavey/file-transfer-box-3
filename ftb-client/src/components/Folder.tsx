@@ -3,10 +3,11 @@ import axios from "axios";
 
 interface FolderProps {
     apiHost: string;
+    theme: string;
 }
 
 const Folder: FC<FolderProps> = (props) => {
-    const {apiHost} = props;
+    const {apiHost, theme} = props;
     const [folder, setFolder] = useState('')
 
     const populateFolder = async () => {
@@ -19,7 +20,7 @@ const Folder: FC<FolderProps> = (props) => {
         populateFolder();
     }, []);
 
-    return (<div className="alert alert-secondary bg-light" role="alert">
+    return (<div className={'alert alert-secondary bg-' + theme} role="alert">
         <span className="fw-light">Server Folder Location: </span>
         <span className="font-monospace">{folder}</span>
     </div>);
